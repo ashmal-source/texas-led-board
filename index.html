@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Texas LED — Active Projects</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --canvas-w: 1920px;
+    --canvas-h: 1080px;
+    --accent: #0C0A97;
+    --accent-soft: #0c0a9718;
+
+    --bg: #E9EDF2;
+    --bg-2: #DDE3EB;
+    --surface: #FFFFFF;
+    --surface-2: #F6F8FB;
+    --ink: #102338;
+    --ink-2: #41566E;
+    --ink-3: #7C8DA1;
+    --line: #E3E8EF;
+    --line-strong: #D3DAE4;
+
+    --ok: #1F9D6B;
+    --ok-bg: #1F9D6b1a;
+    --watch: #D9920A;
+    --watch-bg: #D9920a1f;
+    --risk: #D34A36;
+    --risk-bg: #D34a361c;
+
+    --shadow: 0 1px 2px rgba(16,35,56,.04), 0 8px 24px rgba(16,35,56,.07);
+  }
+  [data-theme="dark"]{
+    --bg: #07101D;
+    --bg-2: #0B1726;
+    --surface: #111F30;
+    --surface-2: #0D1A29;
+    --ink: #EAF1F8;
+    --ink-2: #A8BACE;
+    --ink-3: #6F8398;
+    --line: #1E3147;
+    --line-strong: #294056;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.45);
+    --accent-soft: #ffffff14;
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; }
+  body{
+    background:#000;
+    font-family:'Barlow', system-ui, sans-serif;
+    color:var(--ink);
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  #stage{
+    position:fixed; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    background:#000;
+  }
+  #canvas{
+    width:var(--canvas-w); height:var(--canvas-h);
+    transform-origin:center center;
+    background:
+      radial-gradient(120% 120% at 85% -10%, var(--bg-2), var(--bg) 55%);
+    position:relative;
+    overflow:hidden;
+    display:flex; flex-direction:column;
+  }
+
+  /* ---------- Header ---------- */
+  header{
+    flex:0 0 auto;
+    height:138px;
+    padding:0 56px;
+    display:flex; align-items:center; gap:32px;
+    border-bottom:1px solid var(--line);
+    background:var(--surface);
+  }
+  [data-theme="dark"] header{ background:linear-gradient(180deg,var(--surface),var(--surface-2)); }
+
+  .brand{ display:flex; align-items:center; gap:18px; }
+  [data-theme="dark"] .brand{ background:#fff; border-radius:14px; padding:9px 18px; }
+  .brand img.logo{ height:116px; width:auto; display:block; }
+
+  .spacer{ flex:1 1 auto; }
+
+  .clock{ text-align:right; line-height:1; }
+  .clock .time{ font-family:'Barlow Semi Condensed'; font-weight:600; font-size:42px; color:var(--ink); letter-spacing:.5px; font-variant-numeric:tabular-nums; }
+  .clock .time .ampm{ font-size:22px; color:var(--ink-3); margin-left:4px; }
+  .clock .date{ font-size:17px; color:var(--ink-2); margin-top:8px; font-weight:500; letter-spacing:.3px; }
+
+  .wx{
+    display:flex; align-items:center; gap:16px;
+    padding:14px 22px; border-radius:16px;
+    background:var(--surface-2); border:1px solid var(--line);
+    min-width:330px;
+  }
+  .wx .ico{ width:50px; height:50px; flex:0 0 auto; }
+  .wx .main{ line-height:1; }
+  .wx .main .t{ font-family:'Barlow Semi Condensed'; font-weight:600; font-size:38px; color:var(--ink); }
+  .wx .main .c{ font-size:15px; color:var(--ink-2); margin-top:6px; font-weight:500; }
+  .wx .side{ line-height:1.1; padding-left:16px; border-left:1px solid var(--line); }
+  .wx .side .loc{ font-size:14px; color:var(--ink-3); font-weight:600; letter-spacing:.4px; }
+  .wx .side .hl{ font-size:15px; color:var(--ink-2); margin-top:7px; font-variant-numeric:tabular-nums; }
+  .wx .side .work{ display:inline-flex; align-items:center; gap:6px; margin-top:10px; font-size:12.5px; font-weight:700; letter-spacing:.3px; color:var(--ok); }
+  .wx .side .work .d{ width:8px; height:8px; border-radius:50%; background:var(--ok); }
+
+  /* ---------- Sub header ---------- */
+  .subbar{
+    flex:0 0 auto;
+    height:74px; padding:0 56px;
+    display:flex; align-items:center; gap:18px;
+  }
+  .subbar h1{ font-size:27px; font-weight:800; letter-spacing:.3px; color:var(--ink); white-space:nowrap; flex:0 0 auto; }
+  .subbar .count{ font-family:'Barlow Semi Condensed'; font-weight:600; font-size:18px; color:var(--ink-3); letter-spacing:.4px; padding-top:5px; white-space:nowrap; flex:0 0 auto; }
+  .subbar .pgwrap{ margin-left:auto; display:flex; align-items:center; gap:16px; }
+  .pgdots{ display:flex; gap:8px; }
+  .pgdots .pd{ width:10px; height:10px; border-radius:50%; background:var(--line-strong); transition:all .4s ease; }
+  .pgdots .pd.on{ background:var(--accent); width:30px; border-radius:5px; }
+  .pglabel{ font-family:'Barlow Semi Condensed'; font-weight:600; font-size:17px; color:var(--ink-2); letter-spacing:.6px; }
+
+  /* ---------- Grid ---------- */
+  main{ flex:1 1 auto; padding:6px 56px 0; min-height:0; }
+  #grid{
+    height:100%;
+    display:grid;
+    grid-template-columns:repeat(5, 1fr);
+    grid-template-rows:repeat(2, 1fr);
+    align-content:start;
+    gap:22px;
+  }
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:18px;
+    box-shadow:var(--shadow);
+    padding:22px 22px 20px 26px;
+    display:flex; flex-direction:column;
+    position:relative; overflow:hidden;
+    opacity:0; transform:translateY(14px);
+  }
+  .card.in{ opacity:1; transform:none; transition:opacity .5s ease, transform .5s ease; }
+  .card::before{
+    content:""; position:absolute; left:0; top:0; bottom:0; width:5px;
+    background:var(--st, var(--accent));
+  }
+
+  .card .top{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:16px; }
+  .badge{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:'Barlow Semi Condensed'; font-weight:700; font-size:16px; letter-spacing:.6px; text-transform:uppercase;
+    padding:7px 13px; border-radius:8px;
+    background:var(--pb,var(--accent-soft)); color:var(--pc,var(--accent));
+  }
+  .status{ display:inline-flex; align-items:center; gap:8px; font-size:13px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:var(--st); }
+  .status .dot{ width:11px; height:11px; border-radius:50%; background:var(--st); box-shadow:0 0 0 4px var(--st-bg); }
+  .status.risk .dot{ animation:pulse 1.8s ease-in-out infinite; }
+  @keyframes pulse{ 0%,100%{ box-shadow:0 0 0 3px var(--st-bg); } 50%{ box-shadow:0 0 0 8px transparent; } }
+
+  .card .pname{ font-size:25px; font-weight:800; line-height:1.12; color:var(--ink); letter-spacing:.1px;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; min-height:56px; text-wrap:balance; }
+  .card .client{ font-size:16px; font-weight:600; color:var(--ink-2); margin-top:7px; letter-spacing:.2px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+  .meta{ margin-top:18px; padding-top:16px; border-top:1px solid var(--line); display:flex; flex-direction:column; gap:13px; }
+  .meta .row{ display:flex; align-items:center; gap:12px; }
+  .meta .row svg{ width:19px; height:19px; flex:0 0 auto; color:var(--accent); opacity:.85; }
+  .meta .row .v{ font-size:17px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-variant-numeric:tabular-nums; flex:1 1 auto; min-width:0; }
+
+  .prog{ margin-top:auto; padding-top:20px; }
+  .prog .pt{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom:9px; }
+  .prog .pt .lbl{ font-size:12px; font-weight:700; letter-spacing:.7px; text-transform:uppercase; color:var(--ink-3); }
+  .prog .pt .pct{ font-family:'Barlow Semi Condensed'; font-weight:700; font-size:32px; color:var(--ink); line-height:.9; font-variant-numeric:tabular-nums; }
+  .track{ height:11px; border-radius:6px; background:var(--surface-2); border:1px solid var(--line); overflow:hidden; }
+  [data-theme="dark"] .track{ background:#0a1623; }
+  .fill{ height:100%; width:0; border-radius:6px; background:linear-gradient(90deg, var(--st), var(--st)); transition:width 1.1s cubic-bezier(.22,.61,.36,1); }
+
+  /* ---------- Footer ---------- */
+  footer{
+    flex:0 0 auto; height:62px; padding:0 56px;
+    display:flex; align-items:center; gap:26px;
+    border-top:1px solid var(--line); background:var(--surface);
+    font-family:'Barlow Semi Condensed';
+  }
+  [data-theme="dark"] footer{ background:var(--surface-2); }
+  .legend{ display:flex; align-items:center; gap:22px; }
+  .legend .li{ display:flex; align-items:center; gap:8px; font-size:15px; font-weight:600; letter-spacing:.4px; color:var(--ink-2); }
+  .legend .li .d{ width:11px; height:11px; border-radius:50%; }
+  footer .tag{ margin-left:auto; font-size:15px; font-weight:600; letter-spacing:.5px; color:var(--ink-3); }
+  footer .upd{ font-size:15px; font-weight:600; letter-spacing:.4px; color:var(--ink-2); display:flex; align-items:center; gap:8px; }
+  footer .upd .live{ width:8px; height:8px; border-radius:50%; background:var(--ok); box-shadow:0 0 0 0 var(--ok); animation:beat 2.4s ease-in-out infinite; }
+  @keyframes beat{ 0%,100%{ box-shadow:0 0 0 0 rgba(31,157,107,.5);} 50%{ box-shadow:0 0 0 7px transparent; } }
+
+  #tweaks-root{ position:fixed; z-index:99; }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <div id="canvas">
+      <header>
+        <div class="brand">
+          <img class="logo" src="assets/texas-led-logo.png" alt="Texas LED Lighting" />
+        </div>
+        <div class="spacer"></div>
+        <div class="clock">
+          <div class="time" id="clk-time">—</div>
+          <div class="date" id="clk-date">—</div>
+        </div>
+        <div class="wx">
+          <svg class="ico" viewBox="0 0 64 64" fill="none">
+            <circle cx="32" cy="32" r="13" fill="#F2A33A"/>
+            <g stroke="#F2A33A" stroke-width="3.4" stroke-linecap="round">
+              <line x1="32" y1="6" x2="32" y2="14"/><line x1="32" y1="50" x2="32" y2="58"/>
+              <line x1="6" y1="32" x2="14" y2="32"/><line x1="50" y1="32" x2="58" y2="32"/>
+              <line x1="13" y1="13" x2="19" y2="19"/><line x1="45" y1="45" x2="51" y2="51"/>
+              <line x1="51" y1="13" x2="45" y2="19"/><line x1="19" y1="45" x2="13" y2="51"/>
+            </g>
+          </svg>
+          <div class="main">
+            <div class="t">96°</div>
+            <div class="c">Sunny &amp; clear</div>
+          </div>
+          <div class="side">
+            <div class="loc">AUSTIN, TX</div>
+            <div class="hl">H 99° · L 74°</div>
+            <div class="work"><span class="d"></span>OUTDOOR: FAVORABLE</div>
+          </div>
+        </div>
+      </header>
+
+      <div class="subbar">
+        <h1>Active Projects</h1>
+        <div class="count" id="count">—</div>
+        <div class="pgwrap">
+          <div class="pgdots" id="pgdots"></div>
+          <div class="pglabel" id="pglabel">—</div>
+        </div>
+      </div>
+
+      <main>
+        <div id="grid"></div>
+      </main>
+
+      <footer>
+        <div class="legend">
+          <div class="li"><span class="d" style="background:var(--ok)"></span>On Track</div>
+          <div class="li"><span class="d" style="background:var(--watch)"></span>Watch</div>
+          <div class="li"><span class="d" style="background:var(--risk)"></span>At Risk</div>
+        </div>
+        <div class="upd"><span class="live"></span><span id="updated">Updated —</span></div>
+        <div class="tag">TEXAS LED LIGHTING CO. · Field Operations</div>
+      </footer>
+    </div>
+  </div>
+
+  <div id="tweaks-root"></div>
+
+  <script>
+  /* =========================================================
+     DATA
+  ========================================================= */
+  const PHASES = {
+    'Pre-Con':    { c:'#7C8DA1', bg:'#7c8da11f' },
+    'Rough-In':   { c:'#2563A8', bg:'#2563a81f' },
+    'Trim-Out':   { c:'#1A8C8C', bg:'#1a8c8c1f' },
+    'Inspection': { c:'#C77A12', bg:'#c77a121f' },
+    'Punch List': { c:'#7B57C9', bg:'#7b57c91f' },
+    'Energized':  { c:'#1F9D6B', bg:'#1f9d6b1f' },
+  };
+  const ST = {
+    ok:    { c:'var(--ok)',    bg:'var(--ok-bg)',    label:'On Track' },
+    watch: { c:'var(--watch)', bg:'var(--watch-bg)', label:'Watch' },
+    risk:  { c:'var(--risk)',  bg:'var(--risk-bg)',  label:'At Risk' },
+  };
+
+  const SAMPLE = [
+    { name:'Whitestone Town Center',     client:'Whitestone Retail Group', loc:'Cedar Park, TX',     gc:'Balfour Beatty',     phase:'Trim-Out',   ins:'INS-24817', pct:72, st:'ok' },
+    { name:'Riverside Logistics Hub',    client:'Prologis',                loc:'Houston, TX',        gc:'DPR Construction',   phase:'Rough-In',   ins:'INS-23990', pct:38, st:'ok' },
+    { name:'Mercy General — Tower B',    client:'Mercy Health System',     loc:'San Antonio, TX',    gc:'Vaughn Construction',phase:'Inspection', ins:'INS-25101', pct:88, st:'watch' },
+    { name:'Lakeline Station Retail',    client:'Endeavor RE',             loc:'Austin, TX',         gc:"Rogers-O'Brien",     phase:'Energized',  ins:'INS-22760', pct:100,st:'ok' },
+    { name:'Eastfield Distribution Ctr', client:'Hillwood',                loc:'Dallas, TX',         gc:'Hensel Phelps',      phase:'Pre-Con',    ins:'INS-25340', pct:8,  st:'ok' },
+    { name:'Cypress Pointe Apartments',  client:'Greystar',                loc:'Cypress, TX',        gc:'Greystar Dev.',      phase:'Trim-Out',   ins:'INS-24502', pct:64, st:'watch' },
+    { name:'Travis County Annex',        client:'Travis County',           loc:'Austin, TX',         gc:'Flintco',            phase:'Punch List', ins:'INS-21988', pct:95, st:'risk' },
+    { name:'Sunset Ridge Elementary',    client:'Round Rock ISD',          loc:'Round Rock, TX',     gc:'Bartlett Cocke',     phase:'Rough-In',   ins:'INS-25088', pct:31, st:'ok' },
+    { name:'Harbor Freight Plaza',       client:'SimonCRE',                loc:'Pflugerville, TX',   gc:'Skanska USA',        phase:'Inspection', ins:'INS-24410', pct:84, st:'ok' },
+    { name:'Northgate Medical Plaza',    client:'Baylor Scott & White',    loc:'Plano, TX',          gc:'McCarthy',           phase:'Trim-Out',   ins:'INS-24777', pct:58, st:'risk' },
+    { name:'Alamo Tech Campus — Ph.2',   client:'Port SA Tech',            loc:'San Antonio, TX',    gc:'Turner Construction',phase:'Rough-In',   ins:'INS-25210', pct:22, st:'ok' },
+    { name:'Bluebonnet Self-Storage',    client:'CubeSmart',               loc:'Georgetown, TX',     gc:'Byrne Construction', phase:'Punch List', ins:'INS-23055', pct:97, st:'ok' },
+    { name:'Gulfstream Office Park',     client:'Lincoln Property',        loc:'Corpus Christi, TX', gc:'Fulton Coastcon',    phase:'Pre-Con',    ins:'INS-25399', pct:5,  st:'watch' },
+    { name:'Heritage Square Mixed-Use',  client:'Trademark Property',      loc:'Fort Worth, TX',     gc:'Manhattan Const.',   phase:'Trim-Out',   ins:'INS-24120', pct:69, st:'ok' },
+  ];
+
+  // Live data lives in `projects`; starts as the sample list, replaced by the
+  // Google Sheet once it loads (see DATA SOURCE section below).
+  let projects = SAMPLE.slice();
+
+  /* =========================================================
+     ICONS
+  ========================================================= */
+  const IC = {
+    pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>',
+    gc:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><path d="M9 9h.01M9 13h.01M9 17h.01"/></svg>',
+    doc:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/></svg>',
+  };
+
+  /* =========================================================
+     CONFIG + STATE
+  ========================================================= */
+  const CONFIG = { perPage:8, cols:4, rotateSec:10 };
+  let page = 0, rotateTimer = null;
+
+  const grid = document.getElementById('grid');
+  const pgdots = document.getElementById('pgdots');
+
+  function totalPages(){ return Math.max(1, Math.ceil(projects.length / CONFIG.perPage)); }
+
+  function render(){
+    const tp = totalPages();
+    page = ((page % tp) + tp) % tp;
+    const start = page * CONFIG.perPage;
+    const slice = projects.slice(start, start + CONFIG.perPage);
+
+    grid.style.gridTemplateColumns = `repeat(${CONFIG.cols}, 1fr)`;
+    grid.innerHTML = '';
+
+    slice.forEach((p, i) => {
+      const ph = PHASES[p.phase] || { c:'var(--accent)', bg:'var(--accent-soft)' };
+      const st = ST[p.st] || ST.ok;
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.style.setProperty('--st', st.c);
+      card.style.setProperty('--st-bg', st.bg);
+      card.style.setProperty('--pb', ph.bg);
+      card.style.setProperty('--pc', ph.c);
+      card.innerHTML = `
+        <div class="top">
+          <span class="badge">${p.phase}</span>
+          <span class="status ${p.st}"><span class="dot"></span>${st.label}</span>
+        </div>
+        <div class="pname">${p.name}</div>
+        <div class="client">${p.client}</div>
+        <div class="meta">
+          <div class="row">${IC.pin}<span class="v">${p.loc}</span></div>
+          <div class="row">${IC.gc}<span class="v">${p.gc}</span></div>
+          <div class="row">${IC.doc}<span class="v">${p.ins}</span></div>
+        </div>
+        <div class="prog">
+          <div class="pt"><span class="lbl">Progress</span><span class="pct">${p.pct}%</span></div>
+          <div class="track"><div class="fill"></div></div>
+        </div>`;
+      grid.appendChild(card);
+
+      setTimeout(() => {
+        card.classList.add('in');
+        card.querySelector('.fill').style.width = p.pct + '%';
+      }, 60 + i * 55);
+    });
+
+    // subbar
+    document.getElementById('count').textContent =
+      `${projects.length} active · showing ${start + 1}\u2013${start + slice.length}`;
+    document.getElementById('pglabel').textContent = `PAGE ${page + 1} / ${tp}`;
+    pgdots.innerHTML = '';
+    for (let d = 0; d < tp; d++){
+      const el = document.createElement('span');
+      el.className = 'pd' + (d === page ? ' on' : '');
+      pgdots.appendChild(el);
+    }
+  }
+
+  function nextPage(){ page++; render(); }
+
+  function startRotate(){
+    clearInterval(rotateTimer);
+    if (totalPages() > 1) rotateTimer = setInterval(nextPage, CONFIG.rotateSec * 1000);
+  }
+
+  /* =========================================================
+     CLOCK
+  ========================================================= */
+  function tick(){
+    const now = new Date();
+    let h = now.getHours(); const m = now.getMinutes(); const s = now.getSeconds();
+    const ap = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    const pad = n => String(n).padStart(2, '0');
+    document.getElementById('clk-time').innerHTML =
+      `${h}:${pad(m)}:${pad(s)}<span class="ampm">${ap}</span>`;
+    document.getElementById('clk-date').textContent =
+      now.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+  }
+  function stampUpdated(){
+    const el = document.getElementById('updated');
+    if (!SHEET_CSV_URL){ el.textContent = 'Sample data'; return; }
+    if (!lastSync){ el.textContent = 'Connecting\u2026'; return; }
+    let h = lastSync.getHours(); const m = lastSync.getMinutes();
+    const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
+    el.textContent = `Updated ${h}:${String(m).padStart(2,'0')} ${ap}`;
+  }
+
+  /* =========================================================
+     DATA SOURCE — Google Sheet (optional)
+     -----------------------------------------------------------------
+     To let the office update projects from a spreadsheet:
+       1. Make a Google Sheet whose first row is these headers
+          (order doesn't matter, capitalization doesn't matter):
+             Project | Client | Location | GC | Phase | Inspection | Percent | Status
+       2. Fill one project per row. Suggested values:
+            Phase  : Pre-Con, Rough-In, Trim-Out, Inspection, Punch List, Energized
+            Status : On Track, Watch, At Risk   (anything else → On Track)
+            Percent: a number 0–100 (the % sign is optional)
+       3. In the Sheet:  File → Share → Publish to web
+             → pick the sheet, choose "Comma-separated values (.csv)" → Publish
+       4. Copy that link and paste it between the quotes below, then
+          re-publish this file to your host. Leave blank to use the sample list.
+     The board re-checks the sheet every 5 minutes, so edits appear on the
+     TV on their own — no need to touch the Fire Stick.
+  ========================================================= */
+  const SHEET_CSV_URL = '';
+  let lastSync = null;
+
+  function parseCSV(text){
+    const rows = []; let row = [], cur = '', q = false;
+    for (let i = 0; i < text.length; i++){
+      const c = text[i];
+      if (q){
+        if (c === '"'){ if (text[i+1] === '"'){ cur += '"'; i++; } else q = false; }
+        else cur += c;
+      } else {
+        if (c === '"') q = true;
+        else if (c === ',') { row.push(cur); cur = ''; }
+        else if (c === '\n'){ row.push(cur); rows.push(row); row = []; cur = ''; }
+        else if (c !== '\r') cur += c;
+      }
+    }
+    if (cur !== '' || row.length){ row.push(cur); rows.push(row); }
+    return rows.filter(r => r.some(c => c.trim() !== ''));
+  }
+
+  function normStatus(s){
+    s = (s || '').toLowerCase();
+    if (/risk|red|behind|late|danger/.test(s)) return 'risk';
+    if (/watch|amber|yellow|caution|hold/.test(s)) return 'watch';
+    return 'ok';
+  }
+  function normPhase(s){
+    s = (s || '').trim();
+    const hit = Object.keys(PHASES).find(k => k.toLowerCase() === s.toLowerCase());
+    return hit || s || '\u2014';
+  }
+  function rowsToProjects(rows){
+    if (!rows.length) return [];
+    const head = rows[0].map(h => h.toLowerCase().trim());
+    const find = (...names) => { for (const n of names){ const i = head.findIndex(h => h.includes(n)); if (i >= 0) return i; } return -1; };
+    const iName = find('project','name'), iClient = find('client','owner'),
+          iLoc = find('location','site','city'), iGc = find('gc','contractor','general'),
+          iPhase = find('phase','stage'), iIns = find('insp','permit'),
+          iPct = find('percent','progress','%','complete'), iSt = find('status','flag','health');
+    const cell = (r,i) => (i >= 0 && r[i] != null) ? r[i].trim() : '';
+    return rows.slice(1).map(r => ({
+      name: cell(r,iName), client: cell(r,iClient), loc: cell(r,iLoc), gc: cell(r,iGc),
+      phase: normPhase(cell(r,iPhase)), ins: cell(r,iIns),
+      pct: Math.max(0, Math.min(100, Math.round(parseFloat(cell(r,iPct).replace(/[^0-9.\-]/g,'')) || 0))),
+      st: normStatus(cell(r,iSt))
+    })).filter(p => p.name);
+  }
+  async function loadSheet(){
+    if (!SHEET_CSV_URL) return;
+    try{
+      const res = await fetch(SHEET_CSV_URL, { cache:'no-store' });
+      if (!res.ok) throw new Error(res.status);
+      const mapped = rowsToProjects(parseCSV(await res.text()));
+      if (mapped.length){ projects = mapped; if (page >= totalPages()) page = 0; render(); }
+      lastSync = new Date();
+      stampUpdated();
+    } catch (e){ /* keep showing whatever we have */ }
+  }
+
+  /* =========================================================
+     SCALING
+  ========================================================= */
+  function fit(){
+    const c = document.getElementById('canvas');
+    // Lock to viewport HEIGHT and let width flex, so the board fills any
+    // aspect ratio edge-to-edge (wider TVs simply get wider cards, no bars).
+    const s = window.innerHeight / 1080;
+    c.style.width = (window.innerWidth / s) + 'px';
+    c.style.transform = `scale(${s})`;
+  }
+
+  /* =========================================================
+     PUBLIC API (for tweaks)
+  ========================================================= */
+  window.__display = {
+    setTheme(t){ if (t === 'dark') document.documentElement.dataset.theme = 'dark'; else delete document.documentElement.dataset.theme; },
+    setAccent(hex){
+      document.documentElement.style.setProperty('--accent', hex);
+      document.documentElement.style.setProperty('--accent-soft', hex + '22');
+    },
+    setPerPage(n){ CONFIG.perPage = n; CONFIG.cols = n <= 8 ? 4 : (n >= 12 ? 6 : 5); page = 0; render(); startRotate(); },
+    setRotate(sec){ CONFIG.rotateSec = sec; startRotate(); },
+  };
+
+  /* =========================================================
+     INIT
+  ========================================================= */
+  fit();
+  window.addEventListener('resize', fit);
+  tick(); setInterval(tick, 1000);
+  stampUpdated(); loadSheet(); setInterval(loadSheet, 5 * 60 * 1000);
+  render();
+  startRotate();
+  </script>
+
+  <!-- Tweaks panel -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+  <script type="text/babel">
+    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+      "theme": "light",
+      "accent": "#0C0A97",
+      "rotateSec": 10,
+      "perPage": 8
+    }/*EDITMODE-END*/;
+
+    function App(){
+      const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+      React.useEffect(() => { window.__display.setTheme(t.theme); }, [t.theme]);
+      React.useEffect(() => { window.__display.setAccent(t.accent); }, [t.accent]);
+      React.useEffect(() => { window.__display.setRotate(t.rotateSec); }, [t.rotateSec]);
+      React.useEffect(() => { window.__display.setPerPage(t.perPage); }, [t.perPage]);
+
+      return (
+        <TweaksPanel title="Tweaks">
+          <TweakSection label="Appearance" />
+          <TweakRadio label="Theme" value={t.theme} options={['light','dark']}
+                      onChange={(v) => setTweak('theme', v)} />
+          <TweakColor label="Accent" value={t.accent}
+                      options={['#0C0A97','#2563A8','#1A8C8C','#C77A12']}
+                      onChange={(v) => setTweak('accent', v)} />
+          <TweakSection label="Rotation" />
+          <TweakSlider label="Page time" value={t.rotateSec} min={6} max={30} step={1} unit="s"
+                       onChange={(v) => setTweak('rotateSec', v)} />
+          <TweakRadio label="Cards / page" value={t.perPage} options={[8,10,12]}
+                      onChange={(v) => setTweak('perPage', v)} />
+        </TweaksPanel>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById('tweaks-root')).render(<App />);
+  </script>
+</body>
+</html>
