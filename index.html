@@ -398,10 +398,13 @@
   function stampUpdated(){
     const el = document.getElementById('updated');
     if (!SHEET_CSV_URL){ el.textContent = 'Sample data'; return; }
-    if (!lastSync){ el.textContent = 'Connecting\u2026'; return; }
-    let h = lastSync.getHours(); const m = lastSync.getMinutes();
-    const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
-    el.textContent = `Updated ${h}:${String(m).padStart(2,'0')} ${ap}`;
+    if (lastSync){
+      let h = lastSync.getHours(); const m = lastSync.getMinutes();
+      const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
+      el.textContent = `Updated ${h}:${String(m).padStart(2,'0')} ${ap}`;
+      return;
+    }
+    el.textContent = sheetTried ? 'Sample data' : 'Connecting\u2026';
   }
 
   /* =========================================================
@@ -422,8 +425,8 @@
      The board re-checks the sheet every 5 minutes, so edits appear on the
      TV on their own — no need to touch the Fire Stick.
   ========================================================= */
-  const SHEET_CSV_URL = '';
-  let lastSync = null;
+  const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTW5Rpefrf0t6_Stv7pnZnrqs1D--NP-kT3eXRDK2TDlmrvHmyAuvoBOfju7DaFN8qlI21voih14PyZ/pub?output=csv';
+  let lastSync = null, sheetTried = false;
 
   function parseCSV(text){
     const rows = []; let row = [], cur = '', q = false;
@@ -479,7 +482,7 @@
       if (mapped.length){ projects = mapped; if (page >= totalPages()) page = 0; render(); }
       lastSync = new Date();
       stampUpdated();
-    } catch (e){ /* keep showing whatever we have */ }
+    } catch (e){ sheetTried = true; stampUpdated(); }
   }
 
   /* =========================================================
